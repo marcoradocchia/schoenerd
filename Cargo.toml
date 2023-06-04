@@ -1,0 +1,32 @@
+[package]
+name = "schoenerd"
+description = "Schoener's D index calculator for niche overlap."
+authors = [
+  "Marco Radocchia <marco.radocchia@outlook.com>",
+  "Gaia Di Francescantonio <gaiadfa@virgilio.it>"
+]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70.0"
+categories = ["command-line-utilities", "science"]
+keywords = ["schoener", "index", "niche-overlap"]
+repository = "https://github.com/marcoradocchia/schoenerd"
+readme = "README.md"
+license = "GPL-3.0-only"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+csv = "1.2"
+clap = { version = "4.3", features = ["derive"] }
+prettytable-rs = "0.10"
+
+[profile.release]
+opt-level = "s"
+lto = "fat"
+strip = "symbols"
+codegen-units = 1
+debug = false
+debug-assertions = false
+panic = "unwind"
+incremental = true
