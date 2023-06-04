@@ -10,8 +10,6 @@
   <!-- ![Crates.io downloads](https://img.shields.io/crates/d/schoenerd?label=crates.io%20downloads&logo=rust) -->
   <!-- ![Crates.io version](https://img.shields.io/crates/v/schoenerd?logo=rust&color=%23d8a657) -->
   ![GitHub license](https://img.shields.io/github/license/marcoradocchia/schoenerd?color=%23e78a4e)
-
-  ![colored_qr](assets/colored_qr.png)
 </div>
   
 
