@@ -1,5 +1,4 @@
-use crate::output::SortDirection;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use std::path::PathBuf;
 
 /// CLI help template.
@@ -11,6 +10,13 @@ const HELP_TEMPLATE: &str = r#"
 {tab}{usage}
 
 {all-args}"#;
+
+/// Output D index value sort direction.
+#[derive(Debug, ValueEnum, Clone, Copy)]
+pub enum SortDirection {
+    Descending,
+    Ascending,
+}
 
 /// Schoener's D index calculator for niche overlap.
 #[derive(Debug, Parser)]
@@ -54,6 +60,9 @@ pub struct Cli {
     #[arg(short = 'C', long, value_name = "CHAR")]
     pub output_quote_character: Option<char>,
 
+    /// Disable output headers.
+    #[arg(short = 'n', long)]
+    pub disable_output_headers: bool,
     /// Sort output by D index value.
     #[arg(short, long, value_enum, value_name = "DIRECTION")]
     pub sort: Option<SortDirection>,

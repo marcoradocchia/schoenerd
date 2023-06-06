@@ -2,7 +2,7 @@ use crate::{
     cli::Cli,
     data::InteractionData,
     input::Input,
-    output::{Output, SortDirection},
+    output::{Output, OutputFormat},
     Result,
 };
 
@@ -12,8 +12,6 @@ pub struct App {
     input: Input,
     /// Output data format.
     output: Output,
-    /// Output sorting strategy (sort by D index value).
-    sort: Option<SortDirection>,
 }
 
 impl App {
@@ -26,21 +24,21 @@ impl App {
             cli.input_quote_character,
         )?;
 
-        let output = match cli.pretty_table {
-            true => Output::Table,
-            false => Output::CSV {
-                path: cli.output,
-                delimiter: cli.output_field_delimiter,
-                terminator: cli.output_record_terminator,
-                quote: cli.output_quote_character,
+        let output = Output::new(
+            !cli.disable_output_headers,
+            cli.sort,
+            match cli.pretty_table {
+                true => OutputFormat::Table,
+                false => OutputFormat::Csv {
+                    path: cli.output,
+                    delimiter: cli.output_field_delimiter,
+                    terminator: cli.output_record_terminator,
+                    quote: cli.output_quote_character,
+                },
             },
-        };
+        );
 
-        Ok(App {
-            input,
-            output,
-            sort: cli.sort,
-        })
+        Ok(App { input, output })
     }
 
     /// Run the [`App`].
@@ -48,11 +46,7 @@ impl App {
         let mut data = InteractionData::parse(self.input)?;
         data.normalize();
 
-        let mut schoener_indexes = data.schoener_indexes();
-        if let Some(direction) = self.sort {
-            schoener_indexes.sort(direction);
-        }
-
+        let schoener_indexes = data.schoener_indexes();
         self.output.finalize(schoener_indexes)
     }
 }

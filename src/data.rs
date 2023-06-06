@@ -1,4 +1,4 @@
-use crate::{error::Error, input::Input, output::SortDirection, Result};
+use crate::{cli::SortDirection, error::Error, input::Input, output::OUTPUT_HEADERS, Result};
 use csv::{ByteRecord, Writer};
 use prettytable::{Attr, Cell, Row, Table};
 use std::io::Write;
@@ -28,18 +28,39 @@ impl<'a> SchoenerIndexes<'a> {
     }
 
     /// Consumes the [`SchoenerIndexes`] producing a CSV.
-    pub fn output_csv<W: Write>(self, mut writer: Writer<W>) -> Result<()> {
-        for index in self.0 {
-            writer.write_byte_record(&index.to_byte_record()).unwrap();
+    pub fn output_csv<W: Write>(self, mut writer: Writer<W>, headers: bool) -> Result<()> {
+        if headers {
+            writer
+                .write_record(OUTPUT_HEADERS)
+                .map_err(Error::WriteRecord)?;
         }
-        writer.flush().map_err(Error::OutputData)
+
+        for index in self.0 {
+            writer
+                .write_byte_record(&index.into())
+                .map_err(Error::WriteRecord)?;
+        }
+
+        writer.flush().map_err(Error::OutputData)?;
+
+        Ok(())
     }
 
     /// Consumes the [`SchoenerIndexes`] producing a pretty table on stdout.
-    pub fn output_table(self, mut table: Table) -> Result<()> {
-        for index in self.0 {
-            table.add_row(index.to_table_row());
+    pub fn output_table(self, mut table: Table, headers: bool) -> Result<()> {
+        if headers {
+            let mut headers = Row::empty();
+            for header in OUTPUT_HEADERS {
+                headers.add_cell(Cell::new(header).with_style(Attr::Bold));
+            }
+
+            table.set_titles(headers);
         }
+
+        for index in self.0 {
+            table.add_row(index.into());
+        }
+
         table.print_tty(false).map_err(Error::OutputData)?;
 
         Ok(())
@@ -54,6 +75,28 @@ pub struct SchoenerD<'a> {
     index: f64,
 }
 
+impl<'a> From<SchoenerD<'a>> for ByteRecord {
+    #[inline]
+    fn from(index: SchoenerD<'a>) -> Self {
+        let mut record = ByteRecord::new();
+        record.push_field(index.first_species.as_bytes());
+        record.push_field(index.second_species.as_bytes());
+        record.push_field(index.index.to_string().as_bytes());
+        record
+    }
+}
+
+impl<'a> From<SchoenerD<'a>> for Row {
+    #[inline]
+    fn from(index: SchoenerD<'a>) -> Self {
+        let mut row = Row::empty();
+        row.add_cell(Cell::new(index.first_species).with_style(Attr::Italic(true)));
+        row.add_cell(Cell::new(index.second_species).with_style(Attr::Italic(true)));
+        row.add_cell(Cell::new(&index.index.to_string()).with_style(Attr::Blink));
+        row
+    }
+}
+
 impl<'a> SchoenerD<'a> {
     /// Constructs a new [`SchoenerD`].
     #[inline(always)]
@@ -63,26 +106,6 @@ impl<'a> SchoenerD<'a> {
             second_species,
             index,
         }
-    }
-
-    /// Returns a [`ByteRecord`] CSV data record.
-    #[inline]
-    pub fn to_byte_record(self) -> ByteRecord {
-        let mut record = ByteRecord::new();
-        record.push_field(self.first_species.as_bytes());
-        record.push_field(self.second_species.as_bytes());
-        record.push_field(self.index.to_string().as_bytes());
-        record
-    }
-
-    /// Returns a table [`Row`] data.
-    #[inline]
-    pub fn to_table_row(self) -> Row {
-        let mut row = Row::empty();
-        row.add_cell(Cell::new(self.first_species).with_style(Attr::Italic(true)));
-        row.add_cell(Cell::new(self.second_species).with_style(Attr::Italic(true)));
-        row.add_cell(Cell::new(&self.index.to_string()).with_style(Attr::Blink));
-        row
     }
 }
 
@@ -104,6 +127,7 @@ impl InteractionData {
     pub fn parse(mut input: Input) -> Result<Self> {
         let pollinators = input.pollinators()?;
         let (plants, interactions) = input.plants_interactions()?;
+        debug_assert_eq!(pollinators.len() * plants.len(), interactions.len());
 
         Ok(Self {
             pollinators,
@@ -112,8 +136,7 @@ impl InteractionData {
         })
     }
 
-    /// Normalize [`InteractionData`] as relative frequencies per species
-    /// (column totals).
+    /// Normalize [`InteractionData`] as relative frequencies per species.
     pub fn normalize(&mut self) {
         let cols = self.pollinators.len();
 

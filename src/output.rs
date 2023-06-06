@@ -1,20 +1,18 @@
-use crate::{data::SchoenerIndexes, Error, Result};
-use clap::ValueEnum;
+use crate::{cli::SortDirection, data::SchoenerIndexes, Error, Result};
 use csv::{Terminator, WriterBuilder};
-use prettytable::{format, Attr, Cell, Row, Table};
+use prettytable::{
+    format::{FormatBuilder, LinePosition, LineSeparator},
+    Table,
+};
 use std::{fs::OpenOptions, io, path::PathBuf};
 
-/// Output D index value sort direction.
-#[derive(Debug, ValueEnum, Clone)]
-pub enum SortDirection {
-    Descending,
-    Ascending,
-}
+/// Output headers.
+pub const OUTPUT_HEADERS: [&str; 3] = ["FIRST SPECIES", "SECOND SPECIES", "D INDEX"];
 
-/// Output dafa format.
-pub enum Output {
+/// [`Output`] dafa format.
+pub enum OutputFormat {
     /// CSV output format (terminal or file).
-    CSV {
+    Csv {
         path: Option<PathBuf>,
         delimiter: Option<char>,
         terminator: Option<char>,
@@ -24,11 +22,31 @@ pub enum Output {
     Table,
 }
 
+/// Configured output.
+pub struct Output {
+    headers: bool,
+    sort: Option<SortDirection>,
+    format: OutputFormat,
+}
+
 impl Output {
+    /// Constructs a new [`Output`] instance.
+    pub fn new(headers: bool, sort: Option<SortDirection>, format: OutputFormat) -> Self {
+        Output {
+            headers,
+            sort,
+            format,
+        }
+    }
+
     /// Finalizes [`Output`].
-    pub fn finalize(self, schoener_indexes: SchoenerIndexes) -> Result<()> {
-        match self {
-            Output::CSV {
+    pub fn finalize(self, mut schoener_indexes: SchoenerIndexes) -> Result<()> {
+        if let Some(direction) = self.sort {
+            schoener_indexes.sort(direction);
+        }
+
+        match self.format {
+            OutputFormat::Csv {
                 path,
                 delimiter,
                 terminator,
@@ -54,42 +72,45 @@ impl Output {
                             .write(true)
                             .create_new(true)
                             .open(&path)
-                            .map_err(|error| Error::OutputFile { path, error })?;
+                            .map_err(|error| Error::OutputFile {
+                                path: path.clone(),
+                                error,
+                            })?;
 
-                        schoener_indexes.output_csv(builder.from_writer(file))
+                        let writer = builder.from_writer(file);
+                        schoener_indexes.output_csv(writer, self.headers)?;
+
+                        Ok(())
                     }
-                    None => schoener_indexes.output_csv(builder.from_writer(io::stdout())),
+                    None => {
+                        let writer = builder.from_writer(io::stdout());
+                        schoener_indexes.output_csv(writer, self.headers)?;
+
+                        Ok(())
+                    }
                 }
             }
-            Output::Table => {
+            OutputFormat::Table => {
                 let mut table = Table::new();
-                let mut headers = Row::empty();
-                headers.add_cell(Cell::new("First Species").with_style(Attr::Bold));
-                headers.add_cell(Cell::new("Second Species").with_style(Attr::Bold));
-                headers.add_cell(Cell::new("D index").with_style(Attr::Bold));
+                let format = FormatBuilder::new()
+                    .column_separator('│')
+                    .borders('│')
+                    .separators(&[LinePosition::Top], LineSeparator::new('─', '┬', '┌', '┐'))
+                    .separators(
+                        &[LinePosition::Intern],
+                        LineSeparator::new('─', '┼', '├', '┤'),
+                    )
+                    .separators(
+                        &[LinePosition::Bottom],
+                        LineSeparator::new('─', '┴', '└', '┘'),
+                    )
+                    .padding(1, 1)
+                    .build();
 
-                table.set_titles(headers);
-                table.set_format(
-                    format::FormatBuilder::new()
-                        .column_separator('│')
-                        .borders('│')
-                        .separators(
-                            &[format::LinePosition::Top],
-                            format::LineSeparator::new('─', '┬', '┌', '┐'),
-                        )
-                        .separators(
-                            &[format::LinePosition::Intern],
-                            format::LineSeparator::new('─', '┼', '├', '┤'),
-                        )
-                        .separators(
-                            &[format::LinePosition::Bottom],
-                            format::LineSeparator::new('─', '┴', '└', '┘'),
-                        )
-                        .padding(1, 1)
-                        .build(),
-                );
+                table.set_format(format);
+                schoener_indexes.output_table(table, self.headers)?;
 
-                schoener_indexes.output_table(table)
+                Ok(())
             }
         }
     }

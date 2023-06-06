@@ -1,5 +1,8 @@
+mod field;
+
 use crate::{error::Error, Result};
 use csv::{Reader, ReaderBuilder, Terminator, Trim};
+pub use field::{InteractionField, ParseFieldError, ParseFieldErrorKind};
 use std::{
     fs::OpenOptions,
     io::{self, IsTerminal, Read},
@@ -59,6 +62,7 @@ impl Input {
     ) -> Result<Input> {
         let mut builder = ReaderBuilder::new();
         builder.trim(Trim::All);
+        builder.has_headers(true);
 
         if let Some(delimiter) = delimiter {
             builder.delimiter(delimiter as u8);
@@ -81,50 +85,70 @@ impl Input {
 
     /// Returns a vector of pollinators species names.
     pub fn pollinators(&mut self) -> Result<Vec<String>> {
-        Ok(self
+        let pollinators = self
             .reader
             .headers()
-            .map_err(Error::InputHeaders)?
+            .map_err(Error::ParseHeaders)?
             .into_iter()
             .skip(1)
             .map(String::from)
-            .collect::<Vec<String>>())
+            .collect::<Vec<String>>();
+
+        if pollinators.len() < 2 {
+            return Err(Error::InsufficientInputColumns { pollinators });
+        }
+
+        Ok(pollinators)
     }
 
-    /// Returns a vector of plants species names and interaction data.
+    /// Returns vectors of plants species names and interaction data respectively.
     pub fn plants_interactions(&mut self) -> Result<(Vec<String>, Vec<f64>)> {
-        let mut plants = Vec::new();
+        let mut plants = Vec::<String>::new();
         let mut interactions = Vec::new();
 
-        for (line, record) in self.reader.records().enumerate() {
-            let record = record.map_err(Error::Record)?;
+        for (line_idx, record) in self.reader.records().enumerate() {
+            let record = record.map_err(Error::ReadRecord)?;
             let mut fields = record.into_iter();
 
-            let plant = fields
-                .next()
-                .ok_or(Error::PlantFieldMissing { line: line + 2 })?
-                .to_string();
+            let plant = match fields.next() {
+                Some(plant) => plant.to_string(),
+                None => continue,
+            };
 
-            if plants.contains(&plant) {
-                return Err(Error::DuplicatePlant {
-                    line: line + 2,
+            if plant.is_empty() {
+                return Err(Error::MissingPlantIdent {
+                    line_nr: line_idx + 2,
+                });
+            }
+
+            // WARNING: worst case is pretty slow for large number of records.
+            // Also valid input will always cause the iterator reach the end, so valid input is worst case.
+            // Maybe use HashSet instad of vector and later convert it?
+            if let Some(prev_occ_line) = plants.iter().position(|element| element == &plant) {
+                return Err(Error::DuplicatePlantIdent {
+                    prev_occ_line_nr: prev_occ_line + 2,
+                    line_nr: line_idx + 2,
                     plant,
                 });
             }
 
             plants.push(plant);
 
-            for interaction in fields {
-                let value =
-                    interaction
-                        .parse::<f64>()
-                        .map_err(|error| Error::InvalidFieldValue {
-                            value: interaction.to_string(),
-                            error,
-                        })?;
+            for (field_idx, field_value) in fields.enumerate() {
+                let interaction =
+                    InteractionField::parse(field_value).map_err(|kind| ParseFieldError {
+                        field_nr: field_idx + 2,
+                        line_nr: line_idx + 2,
+                        field_value: field_value.to_string(),
+                        kind,
+                    })?;
 
-                interactions.push(value);
+                interactions.push(interaction);
             }
+        }
+
+        if plants.is_empty() || interactions.is_empty() {
+            return Err(Error::MissingData);
         }
 
         Ok((plants, interactions))
