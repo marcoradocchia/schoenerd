@@ -30,7 +30,7 @@ clean:
 
 # Install schoenerd.
 [linux]
-install: build && install-completions install-manpages
+install: && install-completions install-manpages
 	@echo "Installing schoenerd using '$PREFIX' installation prefix..."
 	mkdir -p ${PREFIX}/bin
 	cp -f target/release/schoenerd ${PREFIX}/bin
