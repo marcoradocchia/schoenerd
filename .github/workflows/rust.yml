@@ -22,6 +22,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
       - name: Build
         run: cargo build --verbose
 
@@ -35,6 +42,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
       - name: Build
         run: cargo build --verbose
 
@@ -47,6 +61,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
 
       - name: Build
         run: cargo build --verbose
