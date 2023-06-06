@@ -6,8 +6,8 @@ use std::{env, error, fmt, fs, io, process::ExitCode};
 include!("src/cli.rs");
 
 const BINARY_NAME: &str = "schoenerd";
-const SUPPORTED_SHELLS: [Shell; 3] = [Shell::Bash, Shell::Fish, Shell::Zsh];
 const MAN_FILENAME: &str = "schoenerd.1";
+const SUPPORTED_SHELLS: [Shell; 3] = [Shell::Bash, Shell::Fish, Shell::Zsh];
 
 #[derive(Debug)]
 enum BuildError {
@@ -73,7 +73,7 @@ fn build() -> Result<(), BuildError> {
     }
 
     // ---- MANUAL ----
-    let mut man_path = manifest_dir.join("manual");
+    let mut man_path = manifest_dir.join("man");
     fs::create_dir_all(&man_path).map_err(|error| BuildError::CreateDir {
         path: man_path.clone(),
         error,
