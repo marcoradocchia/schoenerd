@@ -11,7 +11,7 @@ const SUPPORTED_SHELLS: [Shell; 3] = [Shell::Bash, Shell::Fish, Shell::Zsh];
 
 #[derive(Debug)]
 enum BuildError {
-    ManifestDirVar,
+    OutDirVar,
     CreateDir { path: PathBuf, error: io::Error },
     CompletionGen { shell: Shell, error: io::Error },
     ManualRender(io::Error),
@@ -21,16 +21,14 @@ enum BuildError {
 impl fmt::Display for BuildError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            BuildError::ManifestDirVar => {
-                f.write_str("CARGO_MANIFEST_DIR environment variable not set")
-            }
+            BuildError::OutDirVar => f.write_str("OUT_DIR environment variable not set"),
             BuildError::CreateDir { path, error } => write!(
                 f,
                 "unable to create '{path}' directory: {error}",
                 path = path.display()
             ),
             BuildError::CompletionGen { shell, error } => {
-                write!(f, "unable to generate {shell} shell completion: {error}")
+                write!(f, "unable to generate {shell} shell completions: {error}")
             }
             BuildError::ManualRender(error) => {
                 write!(f, "unable to render man page: {error}")
@@ -47,13 +45,13 @@ impl fmt::Display for BuildError {
 impl error::Error for BuildError {}
 
 fn build() -> Result<(), BuildError> {
-    let manifest_dir = match env::var_os("CARGO_MANIFEST_DIR") {
+    let out_dir = match env::var_os("OUT_DIR") {
         Some(path) => PathBuf::from(path),
-        None => return Err(BuildError::ManifestDirVar),
+        None => return Err(BuildError::OutDirVar),
     };
 
     // ---- COMPLETIONS ----
-    let comp_path = manifest_dir.join("completions");
+    let comp_path = out_dir.join("completions");
 
     fs::create_dir_all(&comp_path).map_err(|error| BuildError::CreateDir {
         path: comp_path.clone(),
@@ -67,13 +65,13 @@ fn build() -> Result<(), BuildError> {
             .map_err(|error| BuildError::CompletionGen { shell, error })?;
 
         println!(
-            "cargo:warning=completion file for {shell} shell generated at {path}",
+            "cargo:warning=completions file for {shell} shell generated at {path}",
             path = comp_path.display()
         );
     }
 
     // ---- MANUAL ----
-    let mut man_path = manifest_dir.join("man");
+    let mut man_path = out_dir.join("man");
     fs::create_dir_all(&man_path).map_err(|error| BuildError::CreateDir {
         path: man_path.clone(),
         error,
