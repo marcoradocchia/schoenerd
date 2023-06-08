@@ -40,7 +40,7 @@ pub struct Cli {
     /// Input CSV field delimiter.
     #[arg(short = 'f', long, value_name = "CHAR")]
     pub input_field_delimiter: Option<char>,
-    /// Input CSV record (line) terminator.
+    /// Input CSV record terminator.
     #[arg(short = 't', long, value_name = "CHAR")]
     pub input_record_terminator: Option<char>,
     /// Input CSV quote character.
@@ -53,7 +53,7 @@ pub struct Cli {
     /// Output CSV field delimiter.
     #[arg(short = 'F', long, value_name = "CHAR")]
     pub output_field_delimiter: Option<char>,
-    /// Output CSV record (line) terminator.
+    /// Output CSV record terminator.
     #[arg(short = 'T', long, value_name = "CHAR")]
     pub output_record_terminator: Option<char>,
     /// Output CSV quote character.
