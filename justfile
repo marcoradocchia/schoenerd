@@ -5,58 +5,51 @@ export ZSH_COMP_DIR := "/usr/share/zsh/site-functions"
 export BASH_COMP_DIR := "/usr/share/bash-completion/completions"
 export FISH_COMP_DIR := "/usr/share/fish/vendor_completions.d"
 
+pkgver := `printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"`
+
 default: build
 
 # Run tests for schoenerd.
 test:
 	@echo "Running schoenerd tests..."
-	cargo test --all
+	cargo test --all --all-features
 
 # Build schoenerd in release mode.
 build:
 	@echo "Building schoenerd in release mode..."
-	cargo build --release
+	sed -i "s/^\(\s*\)version,/\1version = \"{{pkgver}}\",/; s/v\({version}\)/\1/" ./src/cli.rs
+	cargo build --release --all-features
+	sed -i "s/^\(\s*version\) = \".*\",/\1,/; s/\({version}\)/v\1/" ./src/cli.rs
 
 # Build schoenerd in debug mode.
 build-debug:
 	@echo "Building schoenerd in debug mode..."
-	cargo build
+	cargo build --all-features
 
 # Clean schoenerd build artifacts.
 clean:
 	@echo "Cleaning schoenerd build artifacts..."
 	cargo clean
-	rm -rf completions man
 
 # Install schoenerd.
 [linux]
 install: && install-completions install-manpages
 	@echo "Installing schoenerd using '$PREFIX' installation prefix..."
-	mkdir -p ${PREFIX}/bin
-	cp -f target/release/schoenerd ${PREFIX}/bin
-	chmod 755 ${PREFIX}/bin/schoenerd
+	install -Dm755 ./target/release/schoenerd "${PREFIX}/bin/schoenerd"
 
 # Install shell completions for schoenerd.
 [linux, private]
 install-completions:
 	@echo "Installing shell completions for Zsh, Bash & Fish shells..."
-	mkdir -p ${ZSH_COMP_DIR}
-	cp -f completions/_schoenerd ${ZSH_COMP_DIR}
-	chmod 644 ${ZSH_COMP_DIR}/_schoenerd
-	mkdir -p ${BASH_COMP_DIR}
-	cp -f completions/schoenerd.bash ${BASH_COMP_DIR}
-	chmod 644 ${BASH_COMP_DIR}/schoenerd.bash
-	mkdir -p ${FISH_COMP_DIR}
-	cp -f completions/schoenerd.fish ${FISH_COMP_DIR}
-	chmod 644 ${FISH_COMP_DIR}/schoenerd.fish
+	install -Dm644 ./target/release/build/schoenerd-*/out/completions/_schoenerd "${ZSH_COMP_DIR}/_schoenerd"
+	install -Dm644 ./target/release/build/schoenerd-*/out/completions/schoenerd.bash "${BASH_COMP_DIR}/schoenerd.bash"
+	install -Dm644 ./target/release/build/schoenerd-*/out/completions/schoenerd.fish "${FISH_COMP_DIR}/schoenerd.fish"
 
 # Install man pages for schoenerd.
 [linux, private]
 install-manpages:
 	@echo "Installing man pages..."
-	mkdir -p ${PREFIX}/man/man1
-	cp -f man/schoenerd.1 ${PREFIX}/man/man1
-	chmod 644 ${PREFIX}/man/man1/schoenerd.1
+	install -Dm644 ./target/release/build/schoenerd-*/out/man/schoenerd.1 "${PREFIX}/man/man1/schoenerd.1"
 	
 # Uninstall schoenerd.
 [linux]
