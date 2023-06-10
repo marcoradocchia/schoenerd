@@ -177,25 +177,16 @@ D index is reported in the third field.
 
 Using the `-p/--pretty-table` flag the output is formatted into a table for
 quick data visualization. Using the same input above, the produced result is
-the following:
+an ASCII version of the following table:
 
-```
-┌───────────────────┬───────────────────┬──────────────────────┐
-│ FIRST SPECIES     │ SECOND SPECIES    │ D INDEX              │
-├───────────────────┼───────────────────┼──────────────────────┤
-│ Bombus pratorum   │ Bombus lapidarius │ 0.8300366300366301   │
-├───────────────────┼───────────────────┼──────────────────────┤
-│ Bombus pratorum   │ Bombus mesomelas  │ 0.3321378008494573   │
-├───────────────────┼───────────────────┼──────────────────────┤
-│ Bombus pratorum   │ Bombus pascuorum  │ 0.6871794871794872   │
-├───────────────────┼───────────────────┼──────────────────────┤
-│ Bombus lapidarius │ Bombus mesomelas  │ 0.17353198948290982  │
-├───────────────────┼───────────────────┼──────────────────────┤
-│ Bombus lapidarius │ Bombus pascuorum  │ 0.8571428571428571   │
-├───────────────────┼───────────────────┼──────────────────────┤
-│ Bombus mesomelas  │ Bombus pascuorum  │ 0.030674846625766916 │
-└───────────────────┴───────────────────┴──────────────────────┘
-```
+| **FIRST SPECIES**       | **SECOND SPECIES        | **D INDEX**          |
+| ----------------------- | ----------------------- | -------------------- |
+| **_Bombus pratorum_**   | **_Bombus lapidarius_** | 0.8300366300366301   |
+| **_Bombus pratorum_**   | **_Bombus mesomelas_**  | 0.3321378008494573   |
+| **_Bombus pratorum_**   | **_Bombus pascuorum_**  | 0.6871794871794872   |
+| **_Bombus lapidarius_** | **_Bombus mesomelas_**  | 0.17353198948290982  |
+| **_Bombus lapidarius_** | **_Bombus pascuorum_**  | 0.8571428571428571   |
+| **_Bombus mesomelas_**  | **_Bombus pascuorum_**  | 0.030674846625766916 |
 
 ## Help
 
