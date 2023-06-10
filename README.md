@@ -179,7 +179,7 @@ Using the `-p/--pretty-table` flag the output is formatted into a table for
 quick data visualization. Using the same input above, the produced result is
 an ASCII version of the following table:
 
-| **FIRST SPECIES**       | **SECOND SPECIES        | **D INDEX**          |
+| **FIRST SPECIES**       | **SECOND SPECIES**      | **D INDEX**          |
 | ----------------------- | ----------------------- | -------------------- |
 | **_Bombus pratorum_**   | **_Bombus lapidarius_** | 0.8300366300366301   |
 | **_Bombus pratorum_**   | **_Bombus mesomelas_**  | 0.3321378008494573   |
