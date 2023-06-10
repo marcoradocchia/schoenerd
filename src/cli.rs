@@ -29,13 +29,7 @@ pub enum SortDirection {
 )]
 pub struct Cli {
     /// Input CSV file path.
-    #[arg(
-        short,
-        long,
-        value_name = "FILE",
-        long_help = "Input must be must be presented in CSV format with the \
-         columns being the pollinators and the rows representing the plants."
-    )]
+    #[arg(short, long, value_name = "FILE")]
     pub input: Option<PathBuf>,
     /// Input CSV field delimiter.
     #[arg(short = 'f', long, value_name = "CHAR")]

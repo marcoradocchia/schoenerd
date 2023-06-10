@@ -61,13 +61,8 @@ fn build() -> Result<(), BuildError> {
     let mut cmd = Cli::command();
 
     for shell in SUPPORTED_SHELLS {
-        let comp_path = clap_complete::generate_to(shell, &mut cmd, BINARY_NAME, &comp_path)
+        clap_complete::generate_to(shell, &mut cmd, BINARY_NAME, &comp_path)
             .map_err(|error| BuildError::CompletionGen { shell, error })?;
-
-        println!(
-            "cargo:warning=completions file for {shell} shell generated at {path}",
-            path = comp_path.display()
-        );
     }
 
     // ---- MANUAL ----
@@ -86,11 +81,6 @@ fn build() -> Result<(), BuildError> {
         path: man_path.clone(),
         error,
     })?;
-
-    println!(
-        "cargo:warning=manual file generated at {path}",
-        path = man_path.display()
-    );
 
     Ok(())
 }
