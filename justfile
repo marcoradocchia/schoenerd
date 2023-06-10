@@ -30,6 +30,7 @@ build-debug:
 clean:
 	@echo "Cleaning schoenerd build artifacts..."
 	cargo clean
+	rm -f schoenerd.tar.gz
 
 # Install schoenerd.
 [linux]
@@ -70,6 +71,25 @@ uninstall-completions:
 uninstall-manpages:
 	@echo "Uninstalling man pages..."
 	rm -f ${PREFIX}/man/man1/schoenerd.1
+
+# Create tar archive.
+[private]
+archive:
+	tar -czf schoenerd.tar.gz \
+		LICENSE \
+		README.md \
+		-C ./target/release/build/schoenerd-*/out completions man \
+		-C ../../.. schoenerd
+
+# Build and package git version in schoenerd tar archive.
+package: build && archive
+	@echo "Packaging git version of schoenerd..."
+
+# Build and package release version in schoenerd tar archive.
+package-release: && archive
+	@echo "Building schoenerd in release mode..."
+	cargo build --release --all-features
+	@echo "Packaging release version of schoenerd..."
 
 # Count project's source lines of code.
 sloc:
