@@ -11,11 +11,8 @@
   ![GitHub license](https://img.shields.io/github/license/marcoradocchia/schoenerd?color=%23e78a4e)
 </div>
   
-
 <a href="https://repology.org/project/schoenerd/versions">
   <img src="https://repology.org/badge/vertical-allrepos/schoenerd.svg" alt="Packaging status" align="right">
-  <img src="https://repology.org/badge/vertical-allrepos/schoenerd-bin.svg" alt="Packaging status" align="right">
-  <img src="https://repology.org/badge/vertical-allrepos/schoenerd-git.svg" alt="Packaging status" align="right">
 </a>
 
 Schoener's D index calculator for niche overlap.
